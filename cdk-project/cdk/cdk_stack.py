@@ -86,7 +86,7 @@ class AppStack(Stack):
         )
 
         # Create ECS with ALB
-        ecs_patterns.ApplicationLoadBalancedFargateService(self, "AlbFargate",
+        fargate = ecs_patterns.ApplicationLoadBalancedFargateService(self, "Fargate",
             cluster=cluster,
             cpu=256,
             desired_count=1,
@@ -98,8 +98,16 @@ class AppStack(Stack):
                         repository_name=f"{service}-repo"
                     ),
                     tag=tag
-                )
+                ),
+                container_port=3000
               ),
             memory_limit_mib=512,
             public_load_balancer=True
+        )
+
+        fargate.target_group.configure_health_check(
+            path="/api/status",
+            interval=Duration.seconds(30),
+            timeout=Duration.seconds(5),
+            healthy_http_codes="200-299"
         )
